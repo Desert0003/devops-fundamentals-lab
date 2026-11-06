@@ -1,0 +1,28 @@
+# Day 2 solution: CI pipeline running on the self-hosted agent in the Codespace
+trigger:
+  branches:
+    include: [main]
+
+pr:
+  branches:
+    include: [main]
+
+pool:
+  name: Default
+
+steps:
+  - script: python -m pip install -r requirements.txt
+    displayName: Install dependencies
+
+  - script: python -m flake8 app tests
+    displayName: Lint (code quality)
+
+  - script: python -m pytest --junitxml=test-results.xml
+    displayName: Run tests
+
+  - task: PublishTestResults@2
+    displayName: Publish test results
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: JUnit
+      testResultsFiles: test-results.xml
