@@ -230,7 +230,7 @@ git push
 
 | المشكلة | الحل |
 | --- | --- |
-| الوكيل يظهر Offline | أُغلق الـ Terminal أو توقفت Codespace. افتحها ونفّذ `cd /workspaces/report-service/agent && ./run.sh` |
+| الوكيل يظهر Offline | أُغلق الـ Terminal أو توقفت Codespace. افتحها ونفّذ `cd ~/azagent && ./run.sh` |
 | الخط عالق على Queued | تأكد أن الوكيل Online، وأن قسم `pool` في الملف هو `name: Default` |
 | `git push` يطلب كلمة مرور مرة بعد مرة | نفّذ `git config --global credential.helper store` ثم أعد المحاولة |
 | فشل خطوة Lint | السطر أطول من 120 حرفًا أو فيه مسافات زائدة. اقرأ رقم السطر في السجل وأصلحه |

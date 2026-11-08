@@ -7,7 +7,7 @@ PAT="${2:?Personal Access Token with Agent Pools (Read & manage) scope}"
 AGENT_VERSION="${AGENT_VERSION:-5.277.0}"
 POOL="${POOL:-Default}"
 AGENT_NAME="${AGENT_NAME:-codespace-$(hostname | cut -c1-12)}"
-AGENT_DIR="$(cd "$(dirname "$0")/.." && pwd)/agent"
+AGENT_DIR="${AGENT_DIR:-$HOME/azagent}"
 
 mkdir -p "$AGENT_DIR" && cd "$AGENT_DIR"
 if [ ! -f ./config.sh ]; then
