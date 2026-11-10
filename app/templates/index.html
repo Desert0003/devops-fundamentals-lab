@@ -50,11 +50,12 @@
   <script>
     document.getElementById('f').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const body = { location: location.value, type: type.value, description: description.value };
+      const $ = (id) => document.getElementById(id);
+      const body = { location: $('location').value, type: $('type').value, description: $('description').value };
       const r = await fetch('/api/reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json();
-      msg.textContent = r.ok ? 'تم تسجيل البلاغ رقم ' + d.id : d.errors.join(' | ');
-      if (r.ok) setTimeout(() => location.reload(), 800);
+      $('msg').textContent = r.ok ? 'تم تسجيل البلاغ رقم ' + d.id : d.errors.join(' | ');
+      if (r.ok) setTimeout(() => window.location.reload(), 800);
     });
   </script>
 </body>
