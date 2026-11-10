@@ -23,6 +23,7 @@ python -m app.main
 | `tests/` | الاختبارات التلقائية |
 | `scripts/setup-agent.sh` | تثبيت وكيل Azure Pipelines داخل Codespace |
 | `labs/day2/` | دليل معامل اليوم الثاني وحلولها |
+| `labs/day3/` | دليل معامل اليوم الثالث وحلولها (Docker والنشر المستمر) |
 | `.devcontainer/` | إعدادات بيئة العمل السحابية |
 
 ## English

@@ -1,0 +1,32 @@
+# Day 3 solution: put an earlier version back into production
+trigger: none
+
+parameters:
+  - name: version
+    displayName: Version to restore in prod (for example 1.2.0)
+    type: string
+
+pool:
+  name: Default
+
+stages:
+  - stage: Rollback
+    jobs:
+      - deployment: RollbackProd
+        environment: prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    if ! docker image inspect report-service:${{ parameters.version }} >/dev/null 2>&1; then
+                      echo "##[error]Image report-service:${{ parameters.version }} not found on this agent"
+                      docker images report-service
+                      exit 1
+                    fi
+                  displayName: Check the image exists
+                - template: templates/deploy.yml
+                  parameters:
+                    envName: prod
+                    port: 8083
+                    tag: ${{ parameters.version }}

@@ -1,0 +1,103 @@
+# Day 3 solution: build once, then deploy the same image to dev → test → prod
+trigger:
+  branches:
+    include: [main]
+
+pool:
+  name: Default
+
+stages:
+  - stage: Build
+    displayName: Build and test
+    jobs:
+      - job: BuildAndTest
+        steps:
+          - script: python -m pip install -r requirements.txt
+            displayName: Install dependencies
+
+          - script: python -m flake8 app tests
+            displayName: Lint (code quality)
+
+          - script: python -m pytest --junitxml=test-results.xml
+            displayName: Run tests
+
+          - task: PublishTestResults@2
+            displayName: Publish test results
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: test-results.xml
+
+          - script: |
+              VERSION=$(python -c "from app.main import APP_VERSION; print(APP_VERSION)")
+              docker build -t report-service:$(Build.BuildId) -t report-service:$VERSION .
+              echo "Built report-service:$VERSION  (build $(Build.BuildId))"
+            displayName: Build container image
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
+  - stage: Dev
+    dependsOn: Build
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    jobs:
+      - deployment: DeployDev
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/deploy.yml
+                  parameters:
+                    envName: dev
+                    port: 8081
+                    tag: $(Build.BuildId)
+
+  - stage: Test
+    dependsOn: Dev
+    jobs:
+      - deployment: DeployTest
+        environment: test
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/deploy.yml
+                  parameters:
+                    envName: test
+                    port: 8082
+                    tag: $(Build.BuildId)
+
+  - stage: Prod
+    dependsOn: Test
+    jobs:
+      - deployment: DeployProd
+        environment: prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/deploy.yml
+                  parameters:
+                    envName: prod
+                    port: 8083
+                    tag: $(Build.BuildId)
+
+  # Optional: publish the released image to GitHub Container Registry.
+  # Runs only when the pipeline variables GHCR_USER and GHCR_TOKEN (secret) exist.
+  - stage: Publish
+    dependsOn: Prod
+    condition: and(succeeded(), ne(variables['GHCR_USER'], ''))
+    jobs:
+      - job: PushImage
+        steps:
+          - checkout: self
+          - script: |
+              set -e
+              VERSION=$(python -c "from app.main import APP_VERSION; print(APP_VERSION)")
+              OWNER=$(echo "$GHCR_USER" | tr '[:upper:]' '[:lower:]')
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+              docker tag report-service:$(Build.BuildId) ghcr.io/$OWNER/report-service:$VERSION
+              docker push ghcr.io/$OWNER/report-service:$VERSION
+              docker logout ghcr.io
+            displayName: Push image to ghcr.io
+            env:
+              GHCR_TOKEN: $(GHCR_TOKEN)

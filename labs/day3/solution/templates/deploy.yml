@@ -1,0 +1,30 @@
+# Day 3 solution: the same deploy steps for every environment
+# Lab 3 adds a third step that also checks the home page (see LAB-DAY3.md).
+parameters:
+  - name: envName
+    type: string
+  - name: port
+    type: number
+  - name: tag
+    type: string
+
+steps:
+  - download: none   # nothing to download: the image is already on the agent
+
+  - script: |
+      set -e
+      docker rm -f rs-${{ parameters.envName }} >/dev/null 2>&1 || true
+      docker run -d --name rs-${{ parameters.envName }} --restart unless-stopped \
+        -p ${{ parameters.port }}:8000 -e APP_ENV=${{ parameters.envName }} \
+        report-service:${{ parameters.tag }}
+    displayName: Deploy report-service:${{ parameters.tag }} to ${{ parameters.envName }}
+
+  - script: |
+      for i in $(seq 1 20); do
+        if curl -fs http://localhost:${{ parameters.port }}/health; then echo; exit 0; fi
+        sleep 1
+      done
+      echo "Smoke test failed on ${{ parameters.envName }}"
+      docker logs rs-${{ parameters.envName }} || true
+      exit 1
+    displayName: Smoke test ${{ parameters.envName }}
