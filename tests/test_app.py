@@ -38,3 +38,9 @@ def test_create_and_list_report(client):
 def test_invalid_report_returns_400(client):
     r = client.post("/api/reports", json={"location": ""})
     assert r.status_code == 400
+
+def test_long_plate_is_rejected():
+    data = {"location": "Airport Road", "type": "other", "plate": "12345678901"}
+    errors = validate_report(data)
+    assert "plate must be 10 characters or less" in errors
+

@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 from flask import Flask, jsonify, render_template, request
 
-APP_VERSION = "1.0.0"
-INCIDENT_TYPES = {"collision", "breakdown", "obstacle", "other"}
+APP_VERSION = "1.1.0"
+INCIDENT_TYPES = {"collision", "breakdown", "obstacle", "Sand Storm", "Flood", "other"}
 
 app = Flask(__name__)
 _reports = []
@@ -26,6 +26,10 @@ def validate_report(data):
     description = str(data.get("description", ""))
     if len(description) > 500:
         errors.append("description must be 500 characters or less")
+    plate = str(data.get("plate", ""))
+    if len(plate) > 10:
+        errors.append("plate must be 10 characters or less")
+
     return errors
 
 
@@ -36,6 +40,7 @@ def create_report(data):
         "type": data["type"],
         "description": data.get("description", "").strip(),
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "plate": str(data.get("plate", "")).strip(),
     }
     _reports.append(report)
     return report
